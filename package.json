@@ -1,0 +1,13 @@
+{
+  "name": "schema-prompt",
+  "version": "0.1.0",
+  "description": "CLI tool to prompt for config values based on a JSON schema",
+  "main": "src/index.js",
+  "license": "MIT",
+  "bin": "src/cli.js",
+  "dependencies": {
+    "ajv": "^6.4.0",
+    "chalk": "^2.4.1",
+    "glob": "^7.1.2"
+  }
+}

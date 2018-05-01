@@ -1,0 +1,14 @@
+{
+  "name": "test",
+  "scripts": {
+    "prompt-config": "schema-prompt"
+  },
+  "schema-prompt": {
+    "files": [
+      "config/*.schema.json"
+    ]
+  },
+  "dependencies": {
+    "schema-prompt": "../"
+  }
+}

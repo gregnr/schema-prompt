@@ -1,0 +1,31 @@
+{
+	"$schema": "http://json-schema.org/draft-06/schema#",
+	"fdsafsd": "fdsafs",
+	"properties": {
+		"template": {
+			"type": "string",
+			"description": "Path to SVG template file"
+		},
+		"heartbeatInterval": {
+			"type": "number",
+			"description": "Heartbeat interval",
+			"default": 5000
+		},
+		"httpServer": {
+			"type": "object",
+			"title": "HTTP Server",
+			"properties": {
+				"port": {
+					"type": "number",
+					"description": "Port the HTTP server will listen on",
+					"default": "3000"
+				},
+				"redirectUrl": {
+					"type": "string",
+					"title": "Redirect URL",
+					"default": "https://www.google.com/"
+				}
+			}
+		}
+	}
+}
