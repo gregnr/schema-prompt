@@ -4,6 +4,7 @@
     "prompt-config": "schema-prompt"
   },
   "schema-prompt": {
+    "type": "yaml",
     "files": [
       "config/*.schema.json"
     ]

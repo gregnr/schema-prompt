@@ -2,94 +2,14 @@
 
 const fs = require("fs");
 const path = require("path");
-const readline = require("readline");
 const glob = require("glob");
 const chalk = require("chalk");
-const Ajv = require("ajv");
-const ajv = Ajv();
+const SchemaPrompter = require("./lib/schema-prompter");
+const { promptYesNo } = require("./util/inline-prompt");
+const { serializeObject, getFileExtension } = require("./lib/serializer");
 
 const packageFileName = "package.json";
 const configPropertyName = "schema-prompt";
-
-const rl = readline.createInterface({
-	input: process.stdin,
-	output: process.stdout
-});
-
-const indentUnit = "  ";
-
-const promptProperties = async (level, properties) => await Object.entries(properties)
-
-	.reduce(async (mergedPromise, [property, propertySchema]) => {
-
-		const merged = await mergedPromise;
-
-		const defaultValue = propertySchema.default;
-
-		const indent = indentUnit.repeat(level);
-
-		if (propertySchema.title) {
-			rl.write(chalk`${indent}{green # ${propertySchema.title}}\n`);
-		}
-
-		if (propertySchema.description) {
-			rl.write(chalk`${indent}{green # ${propertySchema.description}}\n`);
-		}
-
-		const question = chalk`${indent}{blueBright ${property}}{magenta ${defaultValue ? ` (${defaultValue})` : ""}}: `
-
-		if (propertySchema.properties) {
-
-			rl.write(`${question}\n\n`);
-
-			return Object.assign(merged, {
-				[property]: await promptProperties(level + 1, propertySchema.properties)
-			});
-		}
-
-		let generatedProperty = undefined;
-		let valid = false;
-
-		do {
-
-			let answer = await new Promise(resolve => rl.question(question, answer => resolve(answer)));
-
-			if (answer === "" && defaultValue) {
-				answer = defaultValue;
-			}
-
-			if (propertySchema.type === "number") {
-
-				const numberAnswer = Number(answer);
-
-				if (!isNaN(numberAnswer)) {
-					answer = numberAnswer;
-				}
-			}
-
-			generatedProperty = {
-				[property]: answer
-			};
-
-			const validate = ajv.compile({
-				properties: {
-					[property]: propertySchema
-				}
-			});
-
-			valid = validate(generatedProperty);
-
-			if (!valid) {
-				rl.write(`'${property}' ${validate.errors[0].message}\n`);
-			}
-
-		} while (!valid);
-
-		rl.write("\n");
-
-		return Object.assign(merged, generatedProperty);
-
-	}, Promise.resolve({}));
 
 try {
 
@@ -105,11 +25,22 @@ try {
 	if (!config.files)
 		throw new Error(`No 'files' specified for '${configPropertyName}'`);
 
+	const type = config.type || "yaml";
+
 	const schemaFiles = config.files
 		.map(pattern => glob.sync(pattern))
 		.reduce((merged, files) => [...merged, ...files]);
 
 	schemaFiles.forEach(async schemaFile => {
+
+		const filePath = `${schemaFile.replace(".schema.json", "")}.${getFileExtension(type)}`;
+
+		console.log();
+		const isReady = await promptYesNo(chalk`Ready to setup {magentaBright ${filePath}}?`);
+
+		if (!isReady) {
+			process.exit(0);
+		}
 
 		const schemaBuffer = fs.readFileSync(schemaFile);
 
@@ -118,18 +49,17 @@ try {
 		if (!schema.properties)
 			return;
 
-		const fileName = schemaFile.replace(".schema", "");
+		const prompter = new SchemaPrompter(filePath);
+
+		const generatedObject = await prompter.promptSchema(schema);
+
+		const serializedData = serializeObject(type, generatedObject);
+
+		fs.writeFileSync(filePath, serializedData);
 
 		console.log();
-		console.log(`Creating file '${fileName}'`);
-		console.log();
-
-		const generatedObject = await promptProperties(0, schema.properties);
-
-		rl.close();
-		
-		console.log(generatedObject);
-	})
+		console.log(chalk`Successfully created file {magentaBright ${filePath}}`);
+	});
 }
 catch (err) {
 

@@ -4,6 +4,7 @@
 	"properties": {
 		"template": {
 			"type": "string",
+			"title": "SVG Template",
 			"description": "Path to SVG template file"
 		},
 		"heartbeatInterval": {
@@ -25,7 +26,15 @@
 					"title": "Redirect URL",
 					"default": "https://www.google.com/"
 				}
-			}
+			},
+			"required": [
+				"port"
+			]
 		}
-	}
+	},
+	"required": [
+		"template",
+		"heartbeatInterval",
+		"httpServer"
+	]
 }
