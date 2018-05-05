@@ -7,6 +7,7 @@ const chalk = require("chalk");
 const SchemaPrompter = require("./lib/schema-prompter");
 const { promptYesNo } = require("./util/inline-prompt");
 const { serializeObject, getFileExtension } = require("./lib/serializer");
+const { PrompterCancelledError } = require("./lib/prompter-errors");
 
 const packageFileName = "package.json";
 const configPropertyName = "schema-prompt";
@@ -50,15 +51,30 @@ try {
 			return;
 
 		const prompter = new SchemaPrompter(filePath);
-
-		const generatedObject = await prompter.promptSchema(schema);
-
-		const serializedData = serializeObject(type, generatedObject);
-
-		fs.writeFileSync(filePath, serializedData);
-
+		
 		console.log();
-		console.log(chalk`Successfully created file {magentaBright ${filePath}}`);
+
+		try {
+
+			const generatedObject = await prompter.promptSchema(schema);
+
+			const serializedData = serializeObject(type, generatedObject);
+	
+			fs.writeFileSync(filePath, serializedData);
+	
+			console.log(chalk`Successfully created file {magentaBright ${filePath}}`);
+		}
+		catch (err) {
+
+			if (err instanceof PrompterCancelledError) {
+
+				console.log(chalk`Failed to created file {magentaBright ${filePath}}. Prompter was cancelled`);
+
+				return;
+			}
+
+			throw err;
+		}
 	});
 }
 catch (err) {

@@ -1,6 +1,5 @@
 {
 	"$schema": "http://json-schema.org/draft-06/schema#",
-	"fdsafsd": "fdsafs",
 	"properties": {
 		"template": {
 			"type": "string",
@@ -19,11 +18,14 @@
 				"port": {
 					"type": "number",
 					"description": "Port the HTTP server will listen on",
+					"minimum": 0,
+					"maximum": 65535,
 					"default": "3000"
 				},
 				"redirectUrl": {
 					"type": "string",
 					"title": "Redirect URL",
+					"format": "uri",
 					"default": "https://www.google.com/"
 				}
 			},

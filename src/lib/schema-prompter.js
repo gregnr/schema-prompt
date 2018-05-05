@@ -1,6 +1,7 @@
 const blessed = require("blessed");
 const Ajv = require("ajv");
 const { exists } = require("../util/tagged-template");
+const { PrompterCancelledError } = require("./prompter-errors");
 
 const ajv = Ajv();
 
@@ -8,10 +9,20 @@ class SchemaPrompter {
 
 	constructor(filePath) {
 
+		this.rejectionHandlers = [];
+
 		const program = blessed.program();
 
 		program.key(["escape", "C-c"], (ch, key) => {
-			return process.exit(0);
+	
+			this.screen.destroy();
+
+			while (this.rejectionHandlers.length > 0) {
+
+				const reject = this.rejectionHandlers.pop();
+
+				reject(new PrompterCancelledError(`Prompter was cancelled using key '${key.full}'`));
+			}
 		});
 
 		this.screen = blessed.screen({
@@ -282,13 +293,18 @@ class SchemaPrompter {
 			}, Promise.resolve({}));
 	}
 
-	async promptSchema(schema) {
+	promptSchema(schema) {
 
-		const generatedObject = await this.promptProperties(["$"], schema.properties, schema.required);
+		return new Promise(async (resolve, reject) => {
 
-		this.screen.destroy();
+			this.rejectionHandlers.push(reject);
 
-		return generatedObject;
+			const generatedObject = await this.promptProperties(["$"], schema.properties, schema.required);
+	
+			this.screen.destroy();
+	
+			resolve(generatedObject);
+		});
 	}
 }
 
